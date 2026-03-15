@@ -11,6 +11,7 @@ from matriun import (
     scale_matrix,
     transpose_matrix,
 )
+from matriun_cli import main as cli_main
 
 
 def test_create_zero_matrix_returns_correct_dimensions():
@@ -100,3 +101,19 @@ def test_apply_wildcard_mask_does_not_mutate_original_matrix():
     original = [[0, 1], [2, 0]]
     apply_wildcard_mask(original, wildcard_value=0)
     assert original == [[0, 1], [2, 0]]
+
+
+def test_cli_demo_command_prints_expected_sections(capsys):
+    exit_code = cli_main(["demo", "--size", "2"])
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "MATRIUN demo" in captured.out
+    assert "Identity matrix:" in captured.out
+    assert "A + B:" in captured.out
+
+
+def test_cli_defaults_to_demo_when_no_command_is_given(capsys):
+    exit_code = cli_main([])
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "MATRIUN demo" in captured.out
