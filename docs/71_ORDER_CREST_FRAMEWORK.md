@@ -367,8 +367,8 @@ The Crest Seal is the visual identity of the entire framework. It is what Plate7
           ╔═══════╪═══════╗   ← outer ring (gold): 71 orders of magnitude
           ║   ┌───┴───┐   ║
           ║   │ ┌─┴─┐ │   ║   ← middle ring (cyan): four layers
-          ║   │ │ ● │ │   ║   ← inner ring (magenta): apex boundary
-          ║   │ └─┬─┘ │   ║   ← center point (white): terminal invariant
+          ║   │ │ ● │ │   ║   ← center point (white): terminal invariant
+          ║   │ └─┬─┘ │   ║   ← inner ring (magenta): apex boundary
           ║   └───┬───┘   ║
           ╚═══════╪═══════╝
                   │
@@ -427,7 +427,7 @@ Horizontal axis (gold): Identity marker — the invariance axis at the midpoint 
     PLANCK SCALE (10^-35 m)
   </text>
 
-  <text x="240" y="260" fill="#ffffff" font-size="12" text-anchor="middle">
+  <text x="240" y="290" fill="#ffffff" font-size="12" text-anchor="middle">
     71-ORDER APEX SEAL
   </text>
 </svg>
