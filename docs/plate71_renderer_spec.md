@@ -160,7 +160,7 @@ def rollup_cycle(statuses: list[str]) -> str:
     return "PendingRepair"
 ```
 
-A state is committed only when all four operators agree. A second consecutive `Invalid` from the same operator triggers rollback.
+A state is committed only when all four operators agree. If two or more operators report `Invalid` in the same cycle, a rollback is triggered immediately; a single `Invalid` enters `PendingRepair` and the ring retries that cycle up to `retry_limit` times before escalating to rollback.
 
 ---
 
@@ -289,22 +289,31 @@ class RoundRobinNode:
         return "Valid", None
 
     def validate_boundaries(self, boundary_prev: bytes, boundary_next: bytes,
-                            neighbour_sigs: dict) -> tuple[str, str, ErrorFlag | None]:
+                            neighbour_sigs: dict) -> tuple[str, str, list[ErrorFlag]]:
         prev_ok = self._check_boundary(boundary_prev, neighbour_sigs.get("prev", ""))
         next_ok = self._check_boundary(boundary_next, neighbour_sigs.get("next", ""))
-        error = None
-        if not prev_ok or not next_ok:
-            error = ErrorFlag(
+        errors: list[ErrorFlag] = []
+        if not prev_ok:
+            errors.append(ErrorFlag(
                 operator_id=self.operator_id,
                 error_type="BoundaryMismatch",
                 depth_level=self.depth_level,
-                signature_expected=neighbour_sigs.get("prev" if not prev_ok else "next", ""),
+                signature_expected=neighbour_sigs.get("prev", ""),
                 signature_received="",
                 timestamp=time.time()
-            )
+            ))
+        if not next_ok:
+            errors.append(ErrorFlag(
+                operator_id=self.operator_id,
+                error_type="BoundaryMismatch",
+                depth_level=self.depth_level,
+                signature_expected=neighbour_sigs.get("next", ""),
+                signature_received="",
+                timestamp=time.time()
+            ))
         return ("Valid" if prev_ok else "Invalid",
                 "Valid" if next_ok else "Invalid",
-                error)
+                errors)
 
     def emit_signature(self, segment_data: bytes,
                        boundary_prev: bytes, boundary_next: bytes) -> str:
@@ -319,26 +328,36 @@ class RoundRobinNode:
                   boundary_next: bytes, neighbour_sigs: dict,
                   upstream_bus, downstream_bus) -> dict:
         seg_status, seg_err = self.validate_segment(segment_data)
-        bp_status, bn_status, bnd_err = self.validate_boundaries(
+        bp_status, bn_status, bnd_errs = self.validate_boundaries(
             boundary_prev, boundary_next, neighbour_sigs)
         sig = self.emit_signature(segment_data, boundary_prev, boundary_next)
-        error = seg_err or bnd_err
-        if error:
-            self.propagate_error(error, upstream_bus, downstream_bus)
+        errors = ([seg_err] if seg_err else []) + bnd_errs
+        for err in errors:
+            self.propagate_error(err, upstream_bus, downstream_bus)
         return {
             "SegmentStatus": seg_status,
             "BoundaryStatusPrev": bp_status,
             "BoundaryStatusNext": bn_status,
             "Signature": sig,
-            "ErrorFlag": error
+            "ErrorFlags": errors
         }
 
-    def _check_boundary(self, boundary: bytes, expected_sig: str) -> bool:
-        if not expected_sig:
+    def _check_boundary(self, boundary: bytes, expected_neighbour_sig: str) -> bool:
+        """
+        The neighbour's signature is Sig(N) = Hash(SegData_N || BndPrev_N || BndNext_N).
+        This boundary bytes object IS BndNext_N (or BndPrev_N) from the neighbour's
+        perspective — the full neighbour signature was already validated when the
+        neighbour emitted it. Here we verify that the shared boundary region has not
+        been altered in transit by re-hashing just the boundary bytes and comparing
+        against the truncated boundary hash stored in neighbour_sigs.
+        In production, neighbour_sigs should carry Hash(boundary_bytes) rather than
+        the full segment signature so this local check remains meaningful.
+        """
+        if not expected_neighbour_sig:
             return True
         h = hashlib.new(self.hash_algo)
         h.update(boundary)
-        return h.hexdigest() == expected_sig
+        return h.hexdigest() == expected_neighbour_sig
 ```
 
 ### 4.5 Ring Behavior (Per Cycle)
@@ -538,6 +557,11 @@ from matriun import Matrix
 def segment_from_matrix(matrix: Matrix, operator_index: int,
                         num_operators: int = 4) -> bytes:
     rows = matrix.data
+    if len(rows) < num_operators:
+        raise ValueError(
+            f"Matrix has {len(rows)} rows; need at least {num_operators} "
+            f"to assign one segment per operator."
+        )
     chunk_size = len(rows) // num_operators
     start = operator_index * chunk_size
     end = start + chunk_size if operator_index < num_operators - 1 else len(rows)
