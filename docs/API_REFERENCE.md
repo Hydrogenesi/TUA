@@ -42,7 +42,7 @@ create_identity_matrix(3)
 Return the dimensions of a matrix.
 
 **Parameters**
-- `matrix` (`list[list]`) — The matrix to inspect. May be empty (`[]`).
+- `matrix` (`list[list[int | float]]`) — The matrix to inspect. May be empty (`[]`).
 
 **Returns** `tuple[int, int]` — `(num_rows, num_cols)`. Returns `(0, 0)` for an empty matrix.
 

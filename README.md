@@ -81,7 +81,7 @@ matriun --help
 ## Documentation
 
 | Document | Description |
-|---|---|
+| --- | --- |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Module structure and design decisions |
 | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Full function signatures and descriptions |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Contributing and testing guide |

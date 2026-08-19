@@ -1,4 +1,4 @@
-# Development Guide
+# MATRIUN Development Guide
 
 ## Prerequisites
 
@@ -7,11 +7,17 @@
 
 ## Setup
 
-Clone the repository and install in editable mode with development dependencies:
+Clone the repository and install the package and development dependencies in one step:
 
 ```bash
 git clone https://github.com/Hydrogenesi/TUA.git
 cd TUA
+pip install -e ".[dev]"
+```
+
+If your environment does not use the extras syntax, install them separately:
+
+```bash
 pip install -e .
 pip install -r requirements.txt
 ```

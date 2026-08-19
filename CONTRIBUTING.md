@@ -13,10 +13,7 @@ Thank you for your interest in contributing!
 
 ## Code Style
 
-- Python 3.9+, no external runtime dependencies.
-- Descriptive names: full English words, no single-letter variables.
-- Functions must not mutate their inputs; always return new matrices.
-- Keep functions short and single-purpose.
+Follow the conventions in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#coding-conventions). In summary: Python 3.9+, descriptive names, no external runtime dependencies, and functions must never mutate their inputs.
 
 ## Reporting Bugs
 

@@ -2,7 +2,7 @@
 
 All notable changes to MATRIUN are documented here.
 
-## [0.1.0] — Initial Release
+## [0.1.0] — 2024-01-01 — Initial Release
 
 ### Added
 
