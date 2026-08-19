@@ -1,574 +1,632 @@
 # Plate71 Renderer Specification
+## Phoenix Engine — Ring Topology & Fractal Architecture
 
-## Overview
-
-**Plate71** is a visualization system for rendering MATRIUN matrices as interactive SVG/HTML visual plates. It transforms numeric matrix data into a structured, visually rich canvas where each cell is rendered as a discrete unit with configurable styling, layout, and interactivity.
-
-### Purpose
-
-- **Bridge** pure matrix operations to visual representation
-- **Enable** interactive exploration of matrix data
-- **Provide** foundation for future visualization features (animation, multi-plate layouts, export)
-- **Maintain** performance and accessibility standards
-
-### Design Philosophy
-
-- **Data-driven:** SVG is generated from configuration + matrix data, never mutated
-- **Semantic:** HTML structure is meaningful; accessibility is built-in
-- **Extensible:** Configuration schema supports future enhancements
-- **Pure:** No external rendering library required; works anywhere SVG is supported
+**Version:** 2.0 — Complete Architectural Rewrite  
+**Module:** `Phoenix.Operator.RoundRobinNode`  
+**Division:** NGR (NucleusGradientRecursion)
 
 ---
 
-## Architecture
+## Executive Summary
 
-### Data Flow
+**Plate71** is the validation and visualization component of the Phoenix Engine. It operates within a **ring topology** — a 4-node operator circuit (A, B, C, D) that continuously validates segment data, checks boundary overlaps, emits cryptographic signatures, and propagates integrity errors. This ring is **fractal**: the same 4-node pattern repeats at every depth layer, from the global Level 0 (L0) down to the finest granularity Ln, following Mandelbrot self-similarity rules. Plate71 renders the live state of this ring — operator statuses, boundary validity, signature chains, and depth navigation — and culminates in the **Crown Layer seal** at the apex of all 71 orders of magnitude.
 
-```
-MATRIUN Matrix
-    ↓
-[matrix: [[1, 2], [3, 4]], config: {...}]
-    ↓
-Renderer Engine
-    ├─ Layout Phase
-    ├─ Style Phase
-    └─ Render Phase
-    ↓
-SVG Markup (with semantic structure)
-    ↓
-HTML Display / Export / Cache
-```
-
-### Core Components
-
-1. **Matrix Data Model** — Numeric data + metadata (types, states, masks)
-2. **Layout Engine** — Computes cell positions, sizes, alignment
-3. **Style System** — Maps data values to visual attributes (colors, borders, text)
-4. **Renderer** — Generates SVG elements with semantic markup
-5. **Configuration** — Geometry, colors, typography, interactions
+Plate71 is not a standalone renderer. It is the eyes of the Phoenix Engine: a real-time monitor of distributed ring health that bridges the MATRIUN matrix operations layer to the higher-order NGR Division controller.
 
 ---
 
-## Plate Geometry
+## 1. Ring Topology Architecture
 
-### Canvas Model
+### 1.1 Four-Node Ring
 
-A **plate** is a rectangular canvas that displays a matrix as a grid of cells.
+Each validation layer contains exactly four operators arranged in a directed ring. Operators are labelled A, B, C, D. Each operator owns one **segment** — a contiguous slice of the layer's data — plus two **boundary overlap regions** shared with its immediate neighbours.
 
 ```
-┌─────────────────────────────────────────┐
-│  margin_top                             │
-│  ┌──────────────────────────────────┐   │
-│  │  Grid (rows × cols)              │   │
-│  │  ┌────┐ ┌────┐ ┌────┐          │   │
-│  │  │ 0,0│ │ 0,1│ │ 0,2│          │   │
-│  │  ├────┤ ├────┤ ├────┤          │   │
-│  │  │ 1,0│ │ 1,1│ │ 1,2│          │   │
-│  │  └────┘ └────┘ └────┘          │   │
-│  └──────────────────────────────────┘   │
-│  margin_bottom                          │
-└─────────────────────────────────────────┘
+                 ┌───────────────────────────────────┐
+           ┌────▶│  Operator A                       │────┐
+           │     │  Segment A                        │    │
+           │     │  Prev: Boundary D→A               │    │
+           │     │  Next: Boundary A→B               │    │
+           │     │  Signature: Sig(A)                │    │
+           │     └───────────────────────────────────┘    │
+           │                                               │
+ ┌─────────┴──────────────────┐        ┌──────────────────┴──────────────────┐
+ │  Operator D                │◀──────▶│  Operator B                         │
+ │  Segment D                 │        │  Segment B                          │
+ │  Prev: Boundary C→D        │        │  Prev: Boundary A→B                 │
+ │  Next: Boundary D→A        │        │  Next: Boundary B→C                 │
+ │  Signature: Sig(D)         │        │  Signature: Sig(B)                  │
+ └─────────┬──────────────────┘        └──────────────────┬──────────────────┘
+           │                                               │
+           │     ┌───────────────────────────────────┐     │
+           └────▶│  Operator C                       │◀────┘
+                 │  Segment C                        │
+                 │  Prev: Boundary B→C               │
+                 │  Next: Boundary C→D               │
+                 │  Signature: Sig(C)                │
+                 └───────────────────────────────────┘
 ```
 
-### Coordinate Systems
+**Legend:**
+- **Boundary X→Y** — overlap region between the trailing edge of segment X and the leading edge of segment Y.
+- **Signature Sig(X)** — hash/checksum emitted by operator X over its segment data plus both boundary regions.
+- Data flows clockwise: A → B → C → D → A.
 
-#### Cartesian (Default)
+### 1.2 Operator Roles
 
-- **Origin:** top-left corner (0, 0)
-- **X-axis:** increases left-to-right
-- **Y-axis:** increases top-to-bottom
-- **Example:** Cell at row 1, col 2 is at screen position (x₀ + 2 × cell_width, y₀ + 1 × cell_height)
+| Operator | Segment Slice | Prev Boundary | Next Boundary |
+|----------|--------------|---------------|---------------|
+| A        | Slice 0      | D→A           | A→B           |
+| B        | Slice 1      | A→B           | B→C           |
+| C        | Slice 2      | B→C           | C→D           |
+| D        | Slice 3      | C→D           | D→A           |
 
-#### Polar (Future)
-
-- **Origin:** center
-- **Angle:** radial position
-- **Radius:** distance from center
-- **Use case:** Circular/radial matrix layouts
-
-### Cell Rendering
-
-Each cell is rendered as a rectangular region with optional borders, padding, and text.
-
-**Cell Dimensions:**
-- `cell_width` — width of a single cell (pixels)
-- `cell_height` — height of a single cell (pixels)
-- `cell_padding` — internal padding around text (pixels)
-- `cell_border_width` — thickness of cell border (pixels)
-- `cell_gap` — space between cells (pixels)
-
-**Example (3×3 matrix):**
-```
-cell_width = 40px
-cell_height = 40px
-cell_gap = 2px
-cell_padding = 2px
-
-Grid dimensions = 3 × 40 + 2 × 2 = 124px (width)
-```
+Each operator is **symmetric** — the module `Phoenix.Operator.RoundRobinNode` is identical for all four; only the segment assignment and neighbour references differ at instantiation time.
 
 ---
 
-## Data Model
+## 2. Boundary Signature System
 
-### Matrix Representation
+### 2.1 Signature Generation
 
-Matrices are passed as standard Python lists-of-lists:
+Each operator computes a signature over its complete validation scope:
+
+```
+Sig(X) = Hash(SegmentData_X || BoundaryPrev_X || BoundaryNext_X)
+```
+
+Where `||` denotes concatenation, and `Hash` defaults to SHA-256 (configurable via `ConfigRules`).
 
 ```python
-matrix = [
-    [1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 9]
-]
+import hashlib
+
+def emit_signature(segment_data: bytes, boundary_prev: bytes, boundary_next: bytes,
+                   hash_algo: str = "sha256") -> str:
+    h = hashlib.new(hash_algo)
+    h.update(segment_data)
+    h.update(boundary_prev)
+    h.update(boundary_next)
+    return h.hexdigest()
 ```
 
-### Cell Metadata
+### 2.2 Boundary Overlap Validation
 
-Each cell may carry additional information:
+A boundary is valid when the two operators that share it agree on its content. Operator A emits `Sig(A)` including `BoundaryA→B`; Operator B receives that same boundary region as its `BoundaryPrev`. The validation step compares both sides:
 
 ```python
-cell_data = {
-    "value": 42,           # Numeric value
-    "type": "number",      # Type hint: number, text, boolean, null
-    "state": "normal",     # Visual state: normal, masked, selected, error
-    "format": ".2f"        # Format specifier for display
-}
+def validate_boundary(local_boundary: bytes, neighbour_signature: str,
+                      neighbour_segment: bytes, neighbour_boundary_prev: bytes,
+                      hash_algo: str = "sha256") -> bool:
+    expected = emit_signature(neighbour_segment, neighbour_boundary_prev,
+                              local_boundary, hash_algo)
+    return expected == neighbour_signature
 ```
 
-### Masked Values
+If the hashes do not match, the boundary is declared **Invalid** and an `ErrorFlag` is raised.
 
-Cells with `state: "masked"` (from `apply_wildcard_mask()`) are visually distinct:
+### 2.3 Validation Flow
+
+```
+Per-cycle validation sequence (single operator):
+
+  1. Receive SegmentData, BoundaryPrev, BoundaryNext from ring bus
+  2. ValidateSegment()
+       └─ Compute Hash(SegmentData)
+       └─ Check against ConfigRules constraints
+  3. ValidateBoundaries()
+       └─ Compare BoundaryPrev with Sig(PrevOperator)
+       └─ Compare BoundaryNext with Sig(NextOperator)
+  4. EmitSignature()
+       └─ Sig(This) = Hash(SegmentData || BoundaryPrev || BoundaryNext)
+  5. PropagateError() [if any mismatch detected]
+       └─ Raise ErrorFlag upstream + downstream
+  6. Pass baton to next operator in ring
+```
+
+### 2.4 Mismatch Detection and Error Propagation
+
+When a boundary mismatch is detected:
 
 ```python
-masked_matrix = [[1, None, 3], [None, 5, None]]
-# None values render as empty cells or with a special glyph
+class ErrorFlag:
+    operator_id: str       # "A", "B", "C", or "D"
+    error_type: str        # "BoundaryMismatch" | "SegmentCorruption" | "RuleViolation"
+    depth_level: int       # which fractal layer the error originated at
+    signature_expected: str
+    signature_received: str
+    timestamp: float
+
+def propagate_error(error: ErrorFlag, upstream_bus, downstream_bus) -> None:
+    upstream_bus.send(error)
+    downstream_bus.send(error)
 ```
 
-### Type-Based Styling
+Errors bubble upward through depth layers (from Ln toward L0) via the boundary signature chain. An error at depth Ln causes the parent boundary at depth Ln-1 to fail its own signature check, which in turn propagates toward L0 — providing a full error trace from root cause to global visibility.
 
-Cells can be styled based on their type:
+### 2.5 Correctness Rollup
 
-- **number:** Renders right-aligned with numeric formatting
-- **text:** Renders left-aligned
-- **boolean:** Renders with a symbol (✓/✗) or colored background
-- **null:** Renders as empty or with a placeholder glyph
+After a full ring cycle, the PhoenixEngine aggregator collects all four statuses:
+
+```python
+def rollup_cycle(statuses: list[str]) -> str:
+    """
+    statuses: list of "Valid" | "Invalid" | "Repaired" from operators A, B, C, D
+    Returns: "Committed" | "PendingRepair" | "Rollback"
+    """
+    if all(s == "Valid" for s in statuses):
+        return "Committed"
+    if statuses.count("Invalid") >= 2:
+        return "Rollback"
+    return "PendingRepair"
+```
+
+A state is committed only when all four operators agree. A second consecutive `Invalid` from the same operator triggers rollback.
 
 ---
 
-## Rendering Process
+## 3. Fractal Recursion Patterns
 
-### Phase 1: Input Validation
+### 3.1 Depth Layers (Mandelbrot Self-Similarity)
 
-- Verify matrix dimensions are valid (non-empty)
-- Check configuration schema compliance
-- Handle edge cases (empty matrix, single cell, very large matrix)
-
-### Phase 2: Layout Computation
+The ring structure repeats at every scale. Each operator node at depth Ln is itself a complete 4-node ring at depth Ln+1:
 
 ```
-For each row i:
-  y = plate.margin_top + i × (cell_height + cell_gap)
-  
-  For each column j:
-    x = plate.margin_left + j × (cell_width + cell_gap)
-    
-    cell_rect = {
-      x, y, cell_width, cell_height,
-      inner_padding, border_width
-    }
+Global Level (L0)
+   A0 → B0 → C0 → D0 → A0
+   Each node is itself a ring at L1.
+
+Level 1 (inside A0)
+   A1 → B1 → C1 → D1 → A1
+   Boundaries at L1 map to sub-boundaries of A0's segment.
+
+Level 2 (inside A1)
+   A2 → B2 → C2 → D2 → A2
+   Same pattern, smaller scale, same rules.
+
+...
+
+Level n
+   An → Bn → Cn → Dn → An
+   Local correctness at Ln bubbles up into correctness at Ln-1.
 ```
 
-### Phase 3: Style Mapping
+### 3.2 Scope Mapping
+
+Segments at depth Ln map to sub-boundaries at depth Ln-1 according to the following rule:
 
 ```
-For each cell(i, j):
-  value = matrix[i][j]
-  
-  color = color_scheme.map(value)
-  text_color = contrast(color)
-  border_color = theme.border_default
-  
-  if cell.state == "masked":
-    color = theme.masked_color
-    text = "–" (dash)
-  else:
-    text = format_value(value, cell.format)
+Segment(X, Ln) ≡ SubBoundary(Parent(X), Ln-1)
 ```
 
-### Phase 4: SVG Generation
+This means:
+- `SegmentData` fed to operator A1 comes from the interior of the A0 boundary region.
+- Validation errors within A1 cause A0's boundary signature to fail.
+- The same `Phoenix.Operator.RoundRobinNode` module is reused at every depth; only the `SegmentData` and its neighbour references differ.
 
-```xml
-<svg viewBox="0 0 width height">
-  <defs>
-    <!-- Gradients, patterns, styles -->
-    <style>
-      .cell { ... }
-      .cell.masked { ... }
-      .cell-text { ... }
-    </style>
-  </defs>
-  
-  <g id="plate">
-    <!-- For each cell -->
-    <g class="cell" data-row="i" data-col="j">
-      <rect x="x" y="y" width="w" height="h" class="cell-bg"/>
-      <text x="x" y="y" class="cell-text">value</text>
-    </g>
-  </g>
-</svg>
-```
+### 3.3 Self-Similarity Rules
 
-### Phase 5: Output & Caching
+| Rule | Description |
+|------|-------------|
+| **Operator reuse** | `Phoenix.Operator.RoundRobinNode` is identical at all depths |
+| **Boundary inheritance** | Sub-boundaries are derived from parent segment edges |
+| **Error bubbling** | Mismatch at depth Ln invalidates boundary at depth Ln-1 |
+| **Commit gating** | A layer only commits if all sub-layers are `Valid` |
+| **Global stability** | Emerges from local correctness repeated at all depths |
 
-- Serialize SVG to string
-- Cache rendered SVG (keyed by matrix hash + config hash)
-- Support partial updates (refresh only changed cells)
-
----
-
-## Configuration Schema
-
-### Plate Geometry Config
+### 3.4 Fractal Depth Configuration
 
 ```json
 {
-  "plate": {
-    "width": 400,
-    "height": 400,
-    "margin_top": 10,
-    "margin_bottom": 10,
-    "margin_left": 10,
-    "margin_right": 10,
-    "cell_width": 40,
-    "cell_height": 40,
-    "cell_gap": 2,
-    "cell_padding": 2,
-    "cell_border_width": 1,
-    "projection": "cartesian"
+  "fractal": {
+    "max_depth": 71,
+    "base_ring_size": 4,
+    "self_similar": true,
+    "scope_mapping": "segment_to_subboundary",
+    "error_propagation": "bottom_up",
+    "commit_strategy": "all_valid_required"
   }
 }
 ```
 
-### Color Scheme Config
+The value `max_depth: 71` corresponds directly to Plate71 — the system spans exactly 71 orders of magnitude, from the global apex (L0, Crown Layer) to the finest recursion level (L70).
+
+---
+
+## 4. PhoenixEngine Operator Module Specification
+
+### 4.1 Module Identity
+
+- **Name:** `Phoenix.Operator.RoundRobinNode`
+- **Role:** Segment validator, boundary checker, signature emitter
+- **Topology:** Member of a 4-node ring (A, B, C, D) per layer
+- **Division:** NGR (NucleusGradientRecursion)
+
+### 4.2 Input Contract
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `SegmentData` | `bytes` | Raw data for this operator's assigned slice |
+| `BoundaryPrev` | `bytes` | Overlap region from previous operator (X→This) |
+| `BoundaryNext` | `bytes` | Overlap region to next operator (This→Y) |
+| `ConfigRules` | `dict` | Validation ruleset: hash algorithm, constraints, thresholds |
+| `NeighbourSigs` | `dict` | `{"prev": str, "next": str}` — signatures from adjacent operators |
+
+### 4.3 Output Contract
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `SegmentStatus` | `str` | `"Valid"` \| `"Invalid"` \| `"Repaired"` |
+| `BoundaryStatusPrev` | `str` | `"Valid"` \| `"Invalid"` |
+| `BoundaryStatusNext` | `str` | `"Valid"` \| `"Invalid"` |
+| `Signature` | `str` | `Sig(This)` — hex digest over segment + both boundaries |
+| `ErrorFlag` | `ErrorFlag \| None` | Structured error if any mismatch detected |
+
+### 4.4 Core Operations (Python Reference Implementation)
+
+```python
+class RoundRobinNode:
+    def __init__(self, operator_id: str, config: dict):
+        self.operator_id = operator_id   # "A", "B", "C", or "D"
+        self.hash_algo = config.get("hash_algo", "sha256")
+        self.constraints = config.get("constraints", {})
+        self.depth_level = config.get("depth_level", 0)
+
+    def validate_segment(self, segment_data: bytes) -> tuple[str, ErrorFlag | None]:
+        h = hashlib.new(self.hash_algo)
+        h.update(segment_data)
+        digest = h.hexdigest()
+        max_len = self.constraints.get("max_segment_length")
+        if max_len and len(segment_data) > max_len:
+            err = ErrorFlag(
+                operator_id=self.operator_id,
+                error_type="RuleViolation",
+                depth_level=self.depth_level,
+                signature_expected="",
+                signature_received=digest,
+                timestamp=time.time()
+            )
+            return "Invalid", err
+        return "Valid", None
+
+    def validate_boundaries(self, boundary_prev: bytes, boundary_next: bytes,
+                            neighbour_sigs: dict) -> tuple[str, str, ErrorFlag | None]:
+        prev_ok = self._check_boundary(boundary_prev, neighbour_sigs.get("prev", ""))
+        next_ok = self._check_boundary(boundary_next, neighbour_sigs.get("next", ""))
+        error = None
+        if not prev_ok or not next_ok:
+            error = ErrorFlag(
+                operator_id=self.operator_id,
+                error_type="BoundaryMismatch",
+                depth_level=self.depth_level,
+                signature_expected=neighbour_sigs.get("prev" if not prev_ok else "next", ""),
+                signature_received="",
+                timestamp=time.time()
+            )
+        return ("Valid" if prev_ok else "Invalid",
+                "Valid" if next_ok else "Invalid",
+                error)
+
+    def emit_signature(self, segment_data: bytes,
+                       boundary_prev: bytes, boundary_next: bytes) -> str:
+        return emit_signature(segment_data, boundary_prev, boundary_next, self.hash_algo)
+
+    def propagate_error(self, error: ErrorFlag,
+                        upstream_bus, downstream_bus) -> None:
+        upstream_bus.send(error)
+        downstream_bus.send(error)
+
+    def run_cycle(self, segment_data: bytes, boundary_prev: bytes,
+                  boundary_next: bytes, neighbour_sigs: dict,
+                  upstream_bus, downstream_bus) -> dict:
+        seg_status, seg_err = self.validate_segment(segment_data)
+        bp_status, bn_status, bnd_err = self.validate_boundaries(
+            boundary_prev, boundary_next, neighbour_sigs)
+        sig = self.emit_signature(segment_data, boundary_prev, boundary_next)
+        error = seg_err or bnd_err
+        if error:
+            self.propagate_error(error, upstream_bus, downstream_bus)
+        return {
+            "SegmentStatus": seg_status,
+            "BoundaryStatusPrev": bp_status,
+            "BoundaryStatusNext": bn_status,
+            "Signature": sig,
+            "ErrorFlag": error
+        }
+
+    def _check_boundary(self, boundary: bytes, expected_sig: str) -> bool:
+        if not expected_sig:
+            return True
+        h = hashlib.new(self.hash_algo)
+        h.update(boundary)
+        return h.hexdigest() == expected_sig
+```
+
+### 4.5 Ring Behavior (Per Cycle)
+
+```
+Ring cycle (all four operators, one depth layer):
+
+  Cycle start
+    ├─ [Parallel] A.run_cycle(), B.run_cycle(), C.run_cycle(), D.run_cycle()
+    │   (boundaries must be synchronized before parallel execution)
+    ├─ Collect outputs: {A: result_A, B: result_B, C: result_C, D: result_D}
+    ├─ Aggregate statuses → rollup_cycle([seg_status_A, ..., seg_status_D])
+    ├─ if "Committed"   → write state, advance ring
+    ├─ if "PendingRepair" → retry once
+    └─ if "Rollback"    → restore previous state, log full error chain
+```
+
+### 4.6 JSON Configuration Schema
 
 ```json
 {
-  "colors": {
-    "scheme": "viridis",
-    "min_value": 0,
-    "max_value": 100,
-    "color_map": {
-      "0": "#440154",
-      "25": "#31688e",
-      "50": "#35b779",
-      "75": "#fde724",
-      "100": "#fde724"
+  "operator": {
+    "id": "A",
+    "depth_level": 0,
+    "hash_algo": "sha256",
+    "neighbours": {
+      "prev": "D",
+      "next": "B"
     },
-    "contrast_threshold": 127,
-    "text_light": "#ffffff",
-    "text_dark": "#000000",
-    "border_default": "#cccccc",
-    "border_selected": "#0066cc",
-    "masked_color": "#f0f0f0"
+    "constraints": {
+      "max_segment_length": 65536,
+      "min_boundary_overlap": 64,
+      "required_fields": ["segment_id", "checksum"]
+    },
+    "retry_limit": 2,
+    "logging": {
+      "emit_signature": true,
+      "emit_status": true,
+      "emit_error_flags": true
+    }
   }
 }
 ```
 
-### Typography Config
+### 4.7 Concurrency and Logging
+
+- **Concurrency:** Operators A, B, C, D can run in parallel within a cycle as long as boundary data exchange completes before each operator calls `validate_boundaries()`.
+- **Logging:** Every cycle, each node logs `Signature`, `SegmentStatus`, `BoundaryStatusPrev`, `BoundaryStatusNext`, and any `ErrorFlag` for full audit traceability.
+- **Recursion:** The same module is instantiated at each Mandelbrot depth. Only `SegmentData` scope and `depth_level` change.
+
+---
+
+## 5. Plate71 Visualization Design
+
+### 5.1 Overview
+
+Plate71 renders the live state of the Phoenix Engine ring topology as an SVG canvas. It provides real-time visibility into operator health, boundary validity, signature chains, fractal depth navigation, and the Crown Layer seal at apex.
+
+### 5.2 Ring Canvas Layout
+
+The primary view shows the 4-node ring at the current depth layer:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Plate71  [Depth: L0]  [Crown Layer: SEALED ✦]              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│              ┌──────────────────────┐                       │
+│         ┌───▶│  A  [VALID] ✓       │───┐                   │
+│         │    │  Sig: a3f9…         │   │                   │
+│         │    └──────────────────────┘   │                   │
+│         │                               │                   │
+│  ┌──────┴──────────┐       ┌────────────┴──────────┐        │
+│  │  D  [VALID] ✓   │◀─────▶│  B  [INVALID] ✗      │        │
+│  │  Sig: 7c2e…     │       │  Sig: MISMATCH        │        │
+│  └──────┬──────────┘       └────────────┬──────────┘        │
+│         │                               │                   │
+│         │    ┌──────────────────────┐   │                   │
+│         └───▶│  C  [VALID] ✓       │◀──┘                   │
+│              │  Sig: d81b…         │                       │
+│              └──────────────────────┘                       │
+│                                                             │
+│  [◀ L-1]  [L+1 ▶]   Errors: 1   Committed: 3/4            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 5.3 Operator Status Display
+
+Each operator node renders with a live status badge:
+
+| Status | Color | Badge |
+|--------|-------|-------|
+| `Valid` | Green `#22c55e` | ✓ |
+| `Invalid` | Red `#ef4444` | ✗ |
+| `Repaired` | Amber `#f59e0b` | ⚠ |
+| `Pending` | Blue `#3b82f6` | … |
+
+Signature values are shown as truncated hex (first 8 characters). A mismatch highlights both the affected operator and the shared boundary edge in red.
+
+### 5.4 Boundary Validation Overlay
+
+Boundary edges between operators are drawn as directed arcs. Valid boundaries are rendered in green; invalid boundaries in red with an animated pulse effect to draw attention. Hovering an edge displays the full boundary hash comparison in a tooltip.
+
+### 5.5 Fractal Depth Navigation
+
+The depth bar at the bottom of the canvas allows zoom navigation through fractal layers:
+
+- **[◀ L-1]** — zoom out to the parent ring
+- **[L+1 ▶]** — zoom into the sub-ring inside the currently selected operator
+- A breadcrumb trail (e.g., `L0 > A0 > L1 > B1 > L2`) tracks the current path through the fractal tree
+- Double-clicking an operator node drills into its L+1 sub-ring
+
+### 5.6 Crown Layer Seal
+
+When all 71 depth layers commit successfully, Plate71 renders the **Crown Layer seal** at the apex:
+
+```
+          ✦  Crown Layer — SEALED  ✦
+
+         ╭──────────────────────────╮
+        ╱  ·  ·  ·  ·  ·  ·  ·  ·  ╲
+       │   · ╭──────────────╮ ·     │
+       │  · │  ⊛   AE       │ ·    │
+       │   · │  APE_XED      │ ·    │
+       │  · │  Plate 71  ✦  │ ·    │
+       │   · ╰──────────────╯ ·     │
+        ╲  ·  ·  ·  ·  ·  ·  ·  ·  ╱
+         ╰──────────────────────────╯
+
+  AE: Identity Closure  |  APE_XED: Edition Crown-State
+  Plate 71: Barred Spiral Seal  |  Status: DRIFTLESS
+```
+
+The barred spiral sigil represents:
+- **Bar** — hinge (conditions precede existence)
+- **Spiral** — recursion (self-similar ring structure)
+- **Ring** — infinity wrapped (closed validation cycle)
+- **Star** — apex identity (all 71 orders confirmed)
+
+The seal is only shown when `rollup_cycle()` returns `"Committed"` at L0 with no pending errors at any sub-layer.
+
+### 5.7 Error Propagation Visualization
+
+When an error originates at depth Ln:
+1. The affected operator node at Ln flashes red.
+2. Animated arrows trace upward through the fractal tree to the parent boundary at Ln-1.
+3. Each affected boundary along the propagation path turns red in sequence.
+4. The error chain halts when it reaches a layer with no mismatch (absorbed by a valid boundary at that level), or propagates all the way to L0 if uncorrected.
+
+### 5.8 SVG Rendering Configuration
 
 ```json
 {
-  "typography": {
-    "font_family": "monospace",
-    "font_size": 12,
-    "font_weight": "normal",
-    "text_align": "center",
-    "line_height": 1.2,
-    "letter_spacing": 0
+  "plate71": {
+    "canvas": {
+      "width": 900,
+      "height": 700,
+      "background": "#0f172a",
+      "font_family": "monospace"
+    },
+    "operators": {
+      "node_radius": 60,
+      "node_stroke": 2,
+      "label_size": 14,
+      "sig_preview_chars": 8
+    },
+    "boundaries": {
+      "arc_stroke": 2,
+      "valid_color": "#22c55e",
+      "invalid_color": "#ef4444",
+      "pulse_animation": true
+    },
+    "crown_layer": {
+      "show_when_sealed": true,
+      "sigil_size": 120,
+      "seal_color": "#f0c040"
+    },
+    "depth_navigation": {
+      "show_breadcrumb": true,
+      "max_breadcrumb_depth": 8
+    }
   }
 }
 ```
 
-### Full Configuration Example
+---
 
-```json
-{
-  "plate": { ... },
-  "colors": { ... },
-  "typography": { ... },
-  "interactive": {
-    "enable_hover": true,
-    "enable_select": false,
-    "enable_zoom": false
-  },
-  "accessibility": {
-    "enable_aria_labels": true,
-    "enable_descriptions": true
-  }
-}
+## 6. MATRIUN Integration
+
+### 6.1 Matrix Operations as Segment Data
+
+MATRIUN matrix objects feed directly into the Phoenix Engine ring as `SegmentData`. Each operator receives a matrix slice corresponding to its segment assignment:
+
+```python
+from matriun import Matrix
+
+def segment_from_matrix(matrix: Matrix, operator_index: int,
+                        num_operators: int = 4) -> bytes:
+    rows = matrix.data
+    chunk_size = len(rows) // num_operators
+    start = operator_index * chunk_size
+    end = start + chunk_size if operator_index < num_operators - 1 else len(rows)
+    slice_rows = rows[start:end]
+    return b"\n".join(
+        b",".join(str(cell).encode() for cell in row)
+        for row in slice_rows
+    )
+```
+
+### 6.2 Wildcard Masking and Boundary Regions
+
+Wildcard masks in MATRIUN (cells with value `None` or a designated mask token) map to the **boundary overlap regions** in the ring topology. Masked cells at the edges of a segment slice become the overlap bytes exchanged between adjacent operators:
+
+```python
+def extract_boundary(matrix: Matrix, operator_index: int,
+                     overlap_rows: int = 2) -> bytes:
+    rows = matrix.data
+    chunk_size = len(rows) // 4
+    boundary_start = (operator_index + 1) * chunk_size - overlap_rows
+    boundary_end = boundary_start + overlap_rows * 2
+    boundary_rows = rows[boundary_start:boundary_end]
+    return b"\n".join(
+        b",".join((b"*" if cell is None else str(cell).encode())
+                  for cell in row)
+        for row in boundary_rows
+    )
+```
+
+The wildcards ensure that boundary bytes are structurally consistent across operator views: both the operator emitting the boundary and the operator receiving it see the same masked values, which is a prerequisite for signature agreement.
+
+### 6.3 Matrix State Tracking Through Ring Cycles
+
+MATRIUN's matrix transformation pipeline maps onto ring cycle progression:
+
+| MATRIUN Operation | Ring Equivalent |
+|-------------------|----------------|
+| `transpose(M)` | Rotate segment assignments (A→B→C→D) |
+| `scale(M, k)` | Apply constraint multiplier to ConfigRules |
+| `add(M1, M2)` | Merge boundary overlap regions from two matrices |
+| `mask(M, pattern)` | Define wildcard boundary overlap positions |
+| `determinant(M)` | Global correctness scalar (commitment indicator) |
+
+The determinant of the composite ring matrix provides a scalar correctness indicator: a non-zero determinant implies full rank and is used as a heuristic for `Committed` state at L0.
+
+### 6.4 Real-Time Visualization Pipeline
+
+```
+MATRIUN Transformation
+        ↓
+segment_from_matrix() × 4 operators
+        ↓
+extract_boundary() × 4 boundary regions
+        ↓
+RoundRobinNode.run_cycle() × 4 nodes (parallel)
+        ↓
+rollup_cycle(statuses)
+        ↓
+Plate71 SVG render_ring(statuses, signatures, errors)
+        ↓
+Display / export
 ```
 
 ---
 
-## SVG Output Specification
+## 7. Future Extensions
 
-### Element Structure
+### 7.1 Multi-Ring Topologies
 
-```xml
-<svg 
-  class="plate71-renderer"
-  viewBox="0 0 width height"
-  xmlns="http://www.w3.org/2000/svg"
->
-  <defs>
-    <style>
-      .cell { cursor: pointer; }
-      .cell.masked { opacity: 0.5; }
-      .cell:hover { stroke-width: 2; }
-      .cell-text { 
-        font-family: monospace;
-        font-size: 12px;
-        text-anchor: middle;
-      }
-    </style>
-  </defs>
-  
-  <g id="plate" role="grid">
-    <g 
-      class="cell"
-      data-row="0"
-      data-col="0"
-      role="gridcell"
-      aria-label="Cell (0,0): value 42"
-    >
-      <rect class="cell-bg" x="10" y="10" width="40" height="40"/>
-      <text class="cell-text" x="30" y="35">42</text>
-    </g>
-    <!-- More cells... -->
-  </g>
-</svg>
-```
+Extend from a single 4-node ring to **multiple concurrent rings** that share boundary regions across rings, enabling validation of multi-dimensional data structures. Each ring validates one axis; cross-ring boundaries ensure 2D/3D consistency.
 
-### Semantic Attributes
+### 7.2 Cross-Layer Validation
 
-- **`data-row`, `data-col`** — Cell position
-- **`data-value`** — Original numeric value
-- **`data-state`** — Cell state (normal, masked, selected)
-- **`role="grid"`, `role="gridcell"`** — ARIA roles for accessibility
+Add cross-depth boundary checks that validate signatures not just within a layer but between non-adjacent depth layers. This detects drift that passes local validation but breaks global consistency.
 
-### Performance Considerations
+### 7.3 Repair Automation
 
-- **Group clipping:** Use `<clipPath>` to hide cells outside viewport
-- **Transforms:** Use CSS transforms for zoom/pan instead of recomputing SVG
-- **Caching:** Store rendered SVG; regenerate only on data change
-- **Lazy rendering:** For very large matrices, render visible region first
+Implement automated repair routines for the `PendingRepair` cycle state: attempt to reconstruct a corrupted segment from the signatures of its neighbors using Reed-Solomon-style error correction, then re-run validation.
+
+### 7.4 Ring Size Generalization
+
+Parameterize ring size beyond 4 nodes (e.g., 8-node, 16-node rings) while preserving the same `Phoenix.Operator.RoundRobinNode` module. Larger rings provide finer segment granularity at the cost of more boundary overhead.
+
+### 7.5 PhoenixEngine Audit Export
+
+Export full cycle audit logs (signature chains, error flags, rollup decisions) from all 71 depth layers as a structured JSON archive for post-hoc analysis, regulatory compliance, or replay-based debugging.
 
 ---
 
-## Examples
 
-### Example 1: Simple 3×3 Matrix
-
-**Input:**
-```python
-matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-config = default_config()
-```
-
-**Output:**
-```
-┌───┬───┬───┐
-│ 1 │ 2 │ 3 │
-├───┼───┼───┤
-│ 4 │ 5 │ 6 │
-├───┼───┼───┤
-│ 7 │ 8 │ 9 │
-└───┴───┴───┘
-```
-
-### Example 2: 5×5 with Color Mapping
-
-Values from 0–25 mapped to color gradient (blue → red).
-
-```
-┌──┬──┬──┬──┬──┐
-│ 0│ 5│10│15│20│  ← values
-├──┼──┼──┼──┼──┤
-│ 5│10│15│20│25│
-├──┼──┼──┼──┼──┤
-│10│15│20│25│10│
-├──┼──┼──┼──┼──┤
-│15│20│25│10│ 5│
-├──┼──┼──┼──┼──┤
-│20│25│10│ 5│ 0│
-└──┴──┴──┴──┴──┘
-```
-
-Cells rendered with background colors interpolated from the gradient.
-
-### Example 3: Masked Matrix
-
-**Input:**
-```python
-matrix = [[1, None, 3], [None, 5, None], [7, 8, 9]]
-```
-
-**Rendering:**
-- Cells with `None` have distinct visual treatment (lighter color, placeholder glyph)
-- Hover state highlights the mask pattern
-
----
-
-## Future Extensions
-
-### Animation Support
-
-- **Fade:** Transition between two matrices
-- **Pulse:** Highlight changed cells
-- **Ripple:** Wave effect from origin point
-
-**API:**
-```python
-renderer.animate(matrix_before, matrix_after, duration_ms=500)
-```
-
-### Interactive Operations
-
-- **Select:** Click to select cells; show selection UI
-- **Copy:** Copy selected cells to clipboard (CSV format)
-- **Transform:** Apply operations (transpose, scale) interactively
-
-**Events:**
-```javascript
-plate.on("cell-click", (row, col, value) => { ... })
-plate.on("selection-change", (cells) => { ... })
-```
-
-### Multi-Plate Layouts
-
-Display multiple matrices side-by-side or overlaid.
-
-```python
-layout = MultiPlateLayout([matrix1, matrix2, matrix3])
-svg = renderer.render(layout)
-```
-
-### Export Formats
-
-- **PNG:** Render to canvas, export as image
-- **PDF:** Vector export for documents
-- **Data URLs:** Inline SVG for sharing
-- **LaTeX:** Tikz export for academic papers
-
-### Real-Time Synchronization
-
-Listen to matrix operations and auto-refresh plate.
-
-```python
-renderer = Plate71Renderer(config)
-matrix = create_identity_matrix(5)
-
-# Whenever matrix changes, re-render
-matrix.on_change(lambda m: renderer.render(m))
-
-result = multiply_matrices(matrix, other)
-# Plate auto-updates!
-```
-
----
-
-## Implementation Notes
-
-### For Python Implementation
-
-Use standard library `xml.etree.ElementTree` or `svgwrite` to generate SVG.
-
-```python
-from xml.etree import ElementTree as ET
-
-def render_plate(matrix, config):
-    svg = ET.Element("svg", {
-        "viewBox": f"0 0 {config.width} {config.height}",
-        "xmlns": "http://www.w3.org/2000/svg"
-    })
-    
-    for i, row in enumerate(matrix):
-        for j, value in enumerate(row):
-            x = config.margin_left + j * (config.cell_width + config.cell_gap)
-            y = config.margin_top + i * (config.cell_height + config.cell_gap)
-            
-            cell_group = ET.SubElement(svg, "g", {
-                "class": "cell",
-                "data-row": str(i),
-                "data-col": str(j)
-            })
-            
-            rect = ET.SubElement(cell_group, "rect", {
-                "x": str(x),
-                "y": str(y),
-                "width": str(config.cell_width),
-                "height": str(config.cell_height)
-            })
-            
-            text = ET.SubElement(cell_group, "text", {
-                "x": str(x + config.cell_width / 2),
-                "y": str(y + config.cell_height / 2)
-            })
-            text.text = str(value) if value is not None else "–"
-    
-    return ET.tostring(svg, encoding="unicode")
-```
-
-### For JavaScript Implementation
-
-Use DOM APIs or a library like `D3.js` for advanced layouts.
-
-```javascript
-function renderPlate(matrix, config) {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", `0 0 ${config.width} ${config.height}`);
-  
-  matrix.forEach((row, i) => {
-    row.forEach((value, j) => {
-      const x = config.marginLeft + j * (config.cellWidth + config.cellGap);
-      const y = config.marginTop + i * (config.cellHeight + config.cellGap);
-      
-      const cell = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      cell.setAttribute("class", "cell");
-      cell.setAttribute("data-row", i);
-      cell.setAttribute("data-col", j);
-      
-      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("x", x);
-      rect.setAttribute("y", y);
-      rect.setAttribute("width", config.cellWidth);
-      rect.setAttribute("height", config.cellHeight);
-      
-      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      text.setAttribute("x", x + config.cellWidth / 2);
-      text.setAttribute("y", y + config.cellHeight / 2);
-      text.textContent = value !== null ? String(value) : "–";
-      
-      cell.appendChild(rect);
-      cell.appendChild(text);
-      svg.appendChild(cell);
-    });
-  });
-  
-  return svg;
-}
-```
-
----
-
-## Conclusion
-
-Plate71 establishes a bridge between MATRIUN's pure matrix operations and interactive visual representation. By defining a clear architecture, configuration schema, and SVG output structure, it enables future visualization features while maintaining simplicity, performance, and accessibility.
-
-**Next Steps:**
-1. Create a `plate71.py` module implementing the renderer
-2. Add test suite for SVG output correctness
-3. Implement caching and performance optimizations
-4. Add CLI commands for rendering matrices to SVG
-5. Extend with animation and interactivity features
+*Plate71 Renderer Specification v2.0 — Phoenix Engine / NGR Division*  
+*Covers 71 orders of magnitude, L0 (Crown Layer) through L70 (finest recursion level).*
