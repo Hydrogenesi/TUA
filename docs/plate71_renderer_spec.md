@@ -512,6 +512,8 @@ At minimum:
 - Per-cell accessible name when interaction is enabled
 - Masked state voiced in labels where relevant
 
+Convention: `data-row`/`data-col` remain zero-based for machine use, while human-facing `aria-label` text should use one-based indexing.
+
 Example:
 
 ```svg
