@@ -2,6 +2,12 @@
 
 MATRIUN is a lightweight matrix utility library with a small command-line demo.
 
+## Feature Preview
+
+Plate71 matrix visualization is currently specified as a design-level preview for future implementation:
+
+- [Plate71 Renderer Specification](docs/plate71_renderer_spec.md)
+
 ## Install
 
 Install from the project root:

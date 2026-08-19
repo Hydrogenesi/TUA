@@ -4,6 +4,12 @@
 
 MATRIUN provides small, focused matrix helpers for Python and includes a CLI demo.
 
+## Navigation
+
+| Document | Description |
+|---|---|
+| [Plate71 Renderer Specification](./plate71_renderer_spec.md) | Technical specification for rendering MATRIUN matrices as interactive SVG/HTML visual plates (feature preview). |
+
 ## Installation
 
 ```bash
