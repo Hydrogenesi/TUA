@@ -1,41 +1,10 @@
-# Documentation Hub
+# MATRIUN Documentation
 
-## MATRIUN
+| Document | Description |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Module structure and design decisions |
+| [API_REFERENCE.md](API_REFERENCE.md) | Full function signatures and examples |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Setup, testing, and contribution guide |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
 
-MATRIUN provides small, focused matrix helpers for Python and includes a CLI demo.
-
-## Installation
-
-```bash
-pip install .
-```
-
-## CLI
-
-Run the demo:
-
-```bash
-matriun demo
-```
-
-Run a larger demo:
-
-```bash
-matriun demo --size 4
-```
-
-Show help:
-
-```bash
-matriun --help
-```
-
-## Library Example
-
-```python
-from matriun import create_identity_matrix, multiply_matrices
-
-identity = create_identity_matrix(2)
-data = [[2, 1], [0, 3]]
-print(multiply_matrices(identity, data))
-```
+For a quick introduction, see the [README](../README.md) at the repository root.
