@@ -107,7 +107,7 @@ Zero matrix:
 | [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Complete API reference with examples |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Setup, testing, and contribution guide |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | Version history and notable changes |
-| [docs/PLATE71_RENDERER_SPEC.md](docs/plate71_renderer_spec.md) | **[PLANNED]** Visualization system for rendering matrices |
+| [docs/plate71_renderer_spec.md](docs/plate71_renderer_spec.md) | **[PLANNED]** Visualization system for rendering matrices |
 
 ## Roadmap
 
