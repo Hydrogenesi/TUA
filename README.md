@@ -65,7 +65,7 @@ from matriun import (
 )
 
 # Create matrices
-identity = create_identity_matrix(3)
+identity = create_identity_matrix(2)
 matrix_a = [[1, 2], [3, 4]]
 
 # Operations
