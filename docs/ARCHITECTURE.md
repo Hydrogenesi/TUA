@@ -24,7 +24,7 @@ TUA/
 
 ### `matriun.py`
 
-The core library. All public functions accept and return standard Python lists-of-lists (`list[list[int | float | None]]`) so no external numeric library is required.
+The core library. Functions that operate on matrix values accept and return standard Python lists-of-lists (`list[list[int | float | None]]`); matrix-construction functions accept integer dimensions and return matrices, while `get_matrix_dimensions` returns a tuple, so no external numeric library is required.
 
 Key design decisions:
 - **Pure Python** — no NumPy or other dependencies; easy to embed anywhere.
