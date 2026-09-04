@@ -18,6 +18,9 @@ classifiers = [
   "Operating System :: OS Independent"
 ]
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
 [project.scripts]
 matriun = "matriun_cli:main"
 

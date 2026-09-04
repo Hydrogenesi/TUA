@@ -1,8 +1,21 @@
-"""Command-line interface for MATRIUN."""
+"""Command-line interface for MATRIUN.
+
+Usage:
+    matriun                 # same as ``matriun demo``
+    matriun demo            # 3x3 walkthrough
+    matriun demo --size N   # NxN walkthrough, N >= 1
+    matriun --help
+
+Exit codes: 0 on success; 2 on argument errors (argparse convention).
+"""
+
+from __future__ import annotations
 
 import argparse
+from typing import Optional, Sequence
 
 from matriun import (
+    Matrix,
     add_matrices,
     create_identity_matrix,
     create_zero_matrix,
@@ -12,12 +25,12 @@ from matriun import (
 )
 
 
-def _format_matrix(matrix):
+def _format_matrix(matrix: Matrix) -> str:
     """Return a readable multi-line matrix representation."""
     return "\n".join(f"  {row}" for row in matrix)
 
 
-def _run_demo(size):
+def _run_demo(size: int) -> None:
     """Print a small walkthrough of matrix operations."""
     print("MATRIUN demo")
     print(f"Matrix size: {size}x{size}")
@@ -34,7 +47,8 @@ def _run_demo(size):
     print("\nScaled identity (x3):")
     print(_format_matrix(scaled_identity))
 
-    matrix_a = [[row + col for col in range(size)] for row in range(size)]
+    # Asymmetric so the transpose is visibly different from A.
+    matrix_a = [[row * size + col for col in range(size)] for row in range(size)]
     matrix_b = transpose_matrix(matrix_a)
 
     print("\nMatrix A:")
@@ -49,7 +63,7 @@ def _run_demo(size):
     print(_format_matrix(multiply_matrices(matrix_a, identity)))
 
 
-def _build_parser():
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="matriun",
         description="MATRIUN matrix utility CLI",
@@ -67,8 +81,12 @@ def _build_parser():
     return parser
 
 
-def main(argv=None):
-    """Run the CLI and return an exit code."""
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    """Run the CLI and return an exit code (0 = success).
+
+    ``argv`` defaults to ``sys.argv[1:]``. Argument errors exit with code 2
+    via ``argparse``.
+    """
     parser = _build_parser()
     args = parser.parse_args(argv)
 

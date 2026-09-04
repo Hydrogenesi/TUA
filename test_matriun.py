@@ -52,6 +52,21 @@ def test_get_matrix_dimensions_empty_matrix():
     assert num_cols == 0
 
 
+def test_create_zero_matrix_raises_on_negative_dimensions():
+    with pytest.raises(ValueError, match="non-negative"):
+        create_zero_matrix(-1, 2)
+
+
+def test_create_identity_matrix_raises_on_negative_size():
+    with pytest.raises(ValueError, match="non-negative"):
+        create_identity_matrix(-3)
+
+
+def test_add_matrices_raises_on_shape_mismatch():
+    with pytest.raises(ValueError, match="Cannot add"):
+        add_matrices([[1, 2]], [[1], [2]])
+
+
 def test_add_matrices_sums_elements():
     first_matrix = [[1, 2], [3, 4]]
     second_matrix = [[5, 6], [7, 8]]
@@ -110,6 +125,19 @@ def test_cli_demo_command_prints_expected_sections(capsys):
     assert "MATRIUN demo" in captured.out
     assert "Identity matrix:" in captured.out
     assert "A + B:" in captured.out
+
+
+def test_cli_demo_transpose_differs_from_original(capsys):
+    cli_main(["demo", "--size", "2"])
+    out = capsys.readouterr().out
+    assert "[0, 1]\n  [2, 3]" in out  # A
+    assert "[0, 2]\n  [1, 3]" in out  # A transposed
+
+
+def test_cli_demo_rejects_non_positive_size():
+    with pytest.raises(SystemExit) as exc_info:
+        cli_main(["demo", "--size", "0"])
+    assert exc_info.value.code == 2
 
 
 def test_cli_defaults_to_demo_when_no_command_is_given(capsys):
