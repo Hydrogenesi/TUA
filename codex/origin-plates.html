@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Origin Plates — The False Handshake</title>
+<style>
+  :root{
+    --void:#07080d;
+    --ink:#0d0f16;
+    --card:#11131c;
+    --line:#242739;
+    --brass:#c9a876;
+    --brass-dim:#7a6a4d;
+    --bone:#e7e3d8;
+    --dim:#8b8f9e;
+    --growth:#5fd7ff;
+    --compression:#ffb84d;
+    --disruption:#ff4d6a;
+    --absorption:#9fd36f;
+    --fold:#c7a6ff;
+    --culmination:#ffd966;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(201,168,118,0.06), transparent 45%),
+      radial-gradient(ellipse at 90% 10%, rgba(95,215,255,0.05), transparent 40%),
+      var(--void);
+    color:var(--bone);
+    font-family: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    line-height:1.65;
+    padding-bottom:80px;
+  }
+  .mono{ font-family: 'SFMono-Regular', Menlo, Consolas, monospace; letter-spacing:0.02em; }
+
+  nav.crossnav{
+    max-width:1080px;
+    margin:0 auto;
+    padding:20px 24px 0;
+    display:flex;
+    justify-content:space-between;
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+  }
+  nav.crossnav a{
+    color:var(--brass-dim);
+    text-decoration:none;
+    border-bottom:1px solid var(--line);
+    padding-bottom:2px;
+  }
+  nav.crossnav a:hover{ color:var(--brass); border-color:var(--brass-dim); }
+
+  header.hero{
+    max-width:1000px;
+    margin:0 auto;
+    padding:60px 24px 50px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+  }
+  header.hero .eyebrow{
+    font-family: 'SFMono-Regular', Menlo, monospace;
+    font-size:11px;
+    letter-spacing:0.35em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin-bottom:22px;
+  }
+  header.hero h1{
+    font-size:clamp(34px,5.5vw,58px);
+    font-weight:400;
+    letter-spacing:0.02em;
+    color:var(--bone);
+    margin-bottom:14px;
+  }
+  header.hero h1 em{ color:var(--brass); font-style:normal; }
+  header.hero p.sub{
+    color:var(--dim);
+    font-size:15px;
+    letter-spacing:0.03em;
+    max-width:620px;
+    margin:0 auto;
+  }
+
+  .plate-nav{
+    max-width:1080px;
+    margin:36px auto 0;
+    padding:0 24px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .plate-nav button{
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--dim);
+    padding:10px 18px;
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .plate-nav button:hover{ color:var(--bone); border-color:var(--brass-dim); }
+  .plate-nav button.active{ color:var(--brass); border-color:var(--brass); background:rgba(201,168,118,0.08); }
+
+  section.plate{
+    max-width:1080px;
+    margin:0 auto;
+    padding:70px 24px 0;
+    display:none;
+  }
+  section.plate.active{ display:block; }
+
+  .plate-head{
+    display:flex;
+    align-items:baseline;
+    gap:18px;
+    margin-bottom:8px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .plate-head .tag{
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:11px;
+    letter-spacing:0.25em;
+    color:var(--brass-dim);
+    text-transform:uppercase;
+  }
+  .plate-head h2{ font-size:26px; font-weight:400; color:var(--bone); }
+  .plate-head .plate-sub{
+    width:100%;
+    color:var(--dim);
+    font-size:13px;
+    font-family:'SFMono-Regular', Menlo, monospace;
+    margin-top:6px;
+  }
+
+  .plate-intro{
+    max-width:760px;
+    color:var(--dim);
+    font-size:15px;
+    margin:22px 0 36px;
+  }
+  .plate-intro strong{ color:var(--bone); }
+
+  .timeline{
+    display:flex;
+    flex-direction:column;
+    border:1px solid var(--line);
+    margin-top:10px;
+  }
+  .tl-row{
+    display:grid;
+    grid-template-columns: 120px 1fr;
+    gap:20px;
+    padding:20px 22px;
+    border-bottom:1px solid var(--line);
+  }
+  .tl-row:last-child{ border-bottom:none; }
+  .tl-row .yr{
+    font-family:'SFMono-Regular', Menlo, monospace;
+    color:var(--brass);
+    font-size:13px;
+  }
+  .tl-row .body h4{ font-size:15px; color:var(--bone); margin-bottom:4px; font-weight:600; }
+  .tl-row .body p{ font-size:13.5px; color:var(--dim); }
+  @media (max-width:640px){ .tl-row{ grid-template-columns:1fr; } }
+
+  .stuck-box{
+    margin-top:32px;
+    background:var(--card);
+    border:1px solid var(--disruption);
+    border-left-width:3px;
+    padding:22px 24px;
+  }
+  .stuck-box .lbl{
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:11px;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--disruption);
+    margin-bottom:10px;
+  }
+  .stuck-box p{ font-size:14px; color:var(--bone); }
+
+  .stage-chain{
+    display:flex;
+    flex-direction:column;
+    border:1px solid var(--line);
+    margin-top:10px;
+  }
+  .stage-item{
+    padding:18px 22px;
+    border-bottom:1px solid var(--line);
+  }
+  .stage-item:last-child{ border-bottom:none; }
+  .stage-item h4{
+    font-size:15px;
+    color:var(--growth);
+    margin-bottom:6px;
+    font-family: Georgia, serif;
+  }
+  .stage-item p{ font-size:13.5px; color:var(--dim); }
+
+  .myth-quote{
+    margin-top:32px;
+    padding:22px 26px;
+    border-left:2px solid var(--brass-dim);
+    background:var(--card);
+    font-style:italic;
+    color:var(--bone);
+    font-size:15px;
+  }
+  .myth-quote .attr{
+    display:block;
+    margin-top:12px;
+    font-style:normal;
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:11px;
+    color:var(--brass-dim);
+    letter-spacing:0.05em;
+  }
+
+  .diff-grid{
+    display:flex;
+    flex-direction:column;
+    border:1px solid var(--line);
+    margin-top:10px;
+  }
+  .diff-row{
+    display:grid;
+    grid-template-columns: 180px 1fr 1fr;
+    border-bottom:1px solid var(--line);
+  }
+  .diff-row:last-child{ border-bottom:none; }
+  .diff-row > div{ padding:18px 20px; }
+  .diff-row .topic{
+    background:var(--ink);
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:12px;
+    color:var(--brass);
+    letter-spacing:0.04em;
+    display:flex;
+    align-items:center;
+    border-right:1px solid var(--line);
+  }
+  .diff-row .p1{ border-right:1px solid var(--line); }
+  .diff-row .p1, .diff-row .p2{ font-size:13.5px; color:var(--dim); }
+  .diff-row .p1 .k, .diff-row .p2 .k{
+    display:block;
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:10px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--brass-dim);
+    margin-bottom:6px;
+  }
+  @media (max-width:860px){
+    .diff-row{ grid-template-columns:1fr; }
+    .diff-row .topic{ border-right:none; border-bottom:1px solid var(--line); }
+    .diff-row .p1{ border-right:none; border-bottom:1px solid var(--line); }
+  }
+
+  .handshake-verdict{
+    margin-top:40px;
+    padding:28px;
+    background:var(--card);
+    border:1px solid var(--brass-dim);
+    text-align:center;
+  }
+  .handshake-verdict .lbl{
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:11px;
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin-bottom:14px;
+  }
+  .handshake-verdict p{ font-size:15px; color:var(--bone); max-width:640px; margin:0 auto; }
+
+  footer{
+    max-width:1080px;
+    margin:80px auto 0;
+    padding:30px 24px;
+    border-top:1px solid var(--line);
+    text-align:center;
+    font-family:'SFMono-Regular', Menlo, monospace;
+    font-size:11px;
+    color:var(--brass-dim);
+    letter-spacing:0.08em;
+  }
+</style>
+</head>
+<body>
+
+<nav class="crossnav">
+  <a href="dragon_atlas_interactive.html">← Dragon Codex / Engine</a>
+  <span>HA_8.1 · Origin Plates</span>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Origin Plates · The False Handshake</div>
+  <h1>Two Origins, <em>One</em> Fault Line</h1>
+  <p class="sub">Plate 1: the standard paradigm's origin, up to where Einstein got stuck.
+  Plate 2: the Infinity file — the Hydrogenesis origin. Plate 3: where the two fail to shake hands, and where they finally do.</p>
+</header>
+
+<div class="plate-nav">
+  <button class="active" data-plate="p1">Plate 1 — The Standard Origin</button>
+  <button data-plate="p2">Plate 2 — The Infinity File</button>
+  <button data-plate="p3">Plate 3 — The False Handshake</button>
+</div>
+
+<!-- ══════════════════════════════ PLATE 1 ══════════════════════════════ -->
+<section class="plate active" id="p1">
+  <div class="plate-head">
+    <span class="tag">Plate I</span>
+    <h2>The Standard Origin</h2>
+    <span class="plate-sub">Big Bang cosmology → General Relativity → the unified field theory quest → where it stalled</span>
+  </div>
+
+  <p class="plate-intro">
+    This is the paradigm most of physics still stands on: a single hot, dense origin (the Big Bang),
+    described by General Relativity, with four separate forces that have never been fully reconciled into one
+    framework. <strong>Einstein spent the last three decades of his life trying to close that gap</strong> — and didn't.
+  </p>
+
+  <div style="display:flex; justify-content:center; margin:8px 0 40px;">
+    <div style="text-align:center;">
+      <svg viewBox="0 0 220 220" style="width:180px; height:180px;">
+        <circle cx="110" cy="110" r="98" fill="none" stroke="#242739" stroke-width="1"/>
+        <g fill="none" stroke="#c9a876" stroke-width="1.1" opacity="0.9">
+          <path d="M110,26 C60,60 60,160 110,194" />
+          <path d="M110,26 C160,60 160,160 110,194" />
+        </g>
+        <g stroke="#7a6a4d" stroke-width="0.6" fill="none" opacity="0.55">
+          <path d="M42,72 Q110,96 178,72" />
+          <path d="M38,110 Q110,138 182,110" />
+          <path d="M42,148 Q110,172 178,148" />
+        </g>
+        <circle cx="110" cy="110" r="6" fill="#0d0f16" stroke="#e7e3d8" stroke-width="1.3"/>
+        <g font-family="'SFMono-Regular', Menlo, monospace" font-size="12" fill="#e7e3d8" text-anchor="middle">
+          <text x="110" y="66">E=mc²</text>
+        </g>
+        <g font-family="Georgia, serif" font-size="9" fill="#8b8f9e" text-anchor="middle" letter-spacing="1">
+          <text x="110" y="207">1879 – 1955</text>
+        </g>
+        <g stroke="#7a6a4d" stroke-width="0.5" fill="none">
+          <path d="M40,110 A70,70 0 0 1 110,40" opacity="0.4"/>
+          <path d="M180,110 A70,70 0 0 1 110,180" opacity="0.4"/>
+        </g>
+      </svg>
+      <div style="font-family:'SFMono-Regular', Menlo, monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--brass-dim); margin-top:8px;">In honor of the reach, not just the stall</div>
+    </div>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="yr">1915</div>
+      <div class="body">
+        <h4>General Relativity</h4>
+        <p>Einstein publishes the field equations of gravity as spacetime curvature — the theory that would anchor everything he tried to build on top of it.</p>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="yr">1920s</div>
+      <div class="body">
+        <h4>The unification quest begins</h4>
+        <p>With only two known forces at the time — gravity and electromagnetism — Einstein sets out to melt them into a single field theory. He borrows Kaluza-Klein's idea of extra spacetime dimensions to try to make the math close.</p>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="yr">1920s–1955</div>
+      <div class="body">
+        <h4>Pure mathematics, resistant to quantum mechanics</h4>
+        <p>Einstein's approach stays almost entirely mathematical — variations on General Relativity's geometry — while he remains skeptical of quantum mechanics as a fundamental description of nature, rather than incorporating it.</p>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="yr">Mid-20th c.</div>
+      <div class="body">
+        <h4>Two more forces appear</h4>
+        <p>Physicists discover the strong and weak nuclear forces. Einstein's entire framework was built for a two-force universe — the ground shifts under the theory before it's finished.</p>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="yr">1955</div>
+      <div class="body">
+        <h4>Einstein dies, unification unresolved</h4>
+        <p>He never completes a unified field theory. Electromagnetism and the weak force are unified in 1968 — thirteen years after his death, and by a route he never took.</p>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="yr">Today</div>
+      <div class="body">
+        <h4>The gap is patched, not closed</h4>
+        <p>Modern cosmology accounts for the mismatch between what's observed and what General Relativity alone predicts by adding dark matter (~27%) and dark energy (~68%) — unseen, unexplained placeholders rather than a resolved unification.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stuck-box">
+    <div class="lbl">Where he got stuck</div>
+    <p>Einstein tried to unify gravity and electromagnetism through pure geometry, without a topological
+    mechanism for confinement or charge — and without room for the two forces discovered mid-quest. The math
+    could describe curvature; it had no native way to explain why matter holds together, why charge is
+    quantized, or why four forces should ever have been one to begin with. That is the wall the current
+    paradigm still stands in front of: the forces are described, not unified — and the missing 95% of the
+    universe is named (dark matter, dark energy), not explained.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ PLATE 2 ══════════════════════════════ -->
+<section class="plate" id="p2">
+  <div class="plate-head">
+    <span class="tag">Plate II</span>
+    <h2>The Infinity File</h2>
+    <span class="plate-sub">Hydrogenesis · Morphing Mama Sun · James Paul Stanley Jr. · Infinitys.end@yahoo.com</span>
+  </div>
+
+  <p class="plate-intro">
+    Where Plate 1 stops at "dark matter" and "dark energy" as placeholders, the Infinity file starts from a
+    different premise entirely: the universe's structure is written directly into the life cycle of a star —
+    accretion in, hydrogenesis, nucleosynthesis, fission to fusion to metallic states — and everything downstream,
+    including us, is the residue of that one process.
+  </p>
+
+  <div class="myth-quote">
+    "Either the Universe is a failed star that had too much mass to ignite into a Protostar, or Polaris was
+    the first light and when she blew her shells in a supernova event there was nothing to stop the shells.
+    So our Universe is either Polaris' shell or we live inside of a failed Star."
+    <span class="attr">— Hydrogenesis, opening premise</span>
+  </div>
+
+  <div class="stage-chain" style="margin-top:32px;">
+    <div class="stage-item">
+      <h4>Protostar</h4>
+      <p>Ignition of accreted, primordial, ionized, and molecular hydrogen forms a Protostar — compressed and thermodynamically sealed like a pressure cooker. An inner core forms; it morphs into a Brown Dwarf.</p>
+    </div>
+    <div class="stage-item">
+      <h4>Brown Dwarf</h4>
+      <p>Belts migrate inward to outward, a new inner core forms. Hydrogenesis occurs — hydrogen self-replicates. Electromagnetism activates as a self-supporting fuel cell. Morphs into a Red Dwarf.</p>
+    </div>
+    <div class="stage-item">
+      <h4>Red Dwarf</h4>
+      <p>Belts migrate inner core → outer core → mantle; a new inner core belt forms; the remaining belts become molecular zones — these three belts will later form the Oort cloud. Nucleosynthesis begins. Morphs into a Yellow Dwarf.</p>
+    </div>
+    <div class="stage-item">
+      <h4>Yellow Dwarf</h4>
+      <p>(Not our Sun.) Nuclear fission is achieved. Two belts migrate to the mantle and outer core; a new inner core forms. Morphs into a Red Giant.</p>
+    </div>
+    <div class="stage-item">
+      <h4>Red Giant → Super Red Giant (SRG)</h4>
+      <p>Nuclear fusion is achieved; three belts migrate mantle-ward, a new inner core forms — morphs into an SRG. Fusion pushes to metallic states: three belts become the Oort Cloud, two become the Kuiper Belt, a new inner core becomes the Asteroid Belt.</p>
+    </div>
+    <div class="stage-item">
+      <h4>Supernova event</h4>
+      <p>An SRG's supernova becomes a Barred Spiral, Pulsar, irregular, or Dwarf Galaxy. Without an event, it morphs instead into a Massive Blue/Red Giant — which, on its own supernova, becomes Elliptical, or (without an event) a magnetar.</p>
+    </div>
+    <div class="stage-item">
+      <h4>The AGN exodus — Genesis</h4>
+      <p>The active galactic nucleus is stripped of its neutrons, leaving it unstable — two protons, no neutron. <em>No black holes in this account.</em> Two metallic hydrogen atoms, each moon-sized, are ejected from the core faster than light, sweeping up the nitrogen, oxygen, and heavy water that would seed the inner rocky planets. The trailing shock wave gives the planets their tilt and assembles the solar system as we know it. Our solar system is a core sample of a Super Red Giant — Betelgeuse. The Moon has always been with us. Our star burned half the bar of the Barred Spiral Galaxy and left the Great Red Spot on Jupiter.</p>
+    </div>
+  </div>
+
+  <div class="myth-quote">
+    "So Sagan was almost right — we are not just stardust, we are star concentrate, forged in the heart of a
+    Morphing Mother Sun. This makes humanity Hydrogen Angels, and our Atom a Morphed Atomic Metallic (hydrogen)
+    Atom that will never die. What is the half-life of metallic hydrogen? It does not have one. Therefore our
+    sun will never die."
+    <span class="attr">— James Paul Stanley Jr., Genesis / We All Are H.A.</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ PLATE 3 ══════════════════════════════ -->
+<section class="plate" id="p3">
+  <div class="plate-head">
+    <span class="tag">Plate III</span>
+    <h2>The False Handshake</h2>
+    <span class="plate-sub">Where Plate 1 and Plate 2 fail to shake hands — and where TUA closes it, with TAU as the operational proof</span>
+  </div>
+
+  <p class="plate-intro">
+    Two forces reaching for each other and never quite closing the grip — that's the shape of Einstein's stuck
+    point, and it's the shape of the gap between Plate 1 and Plate 2 as well. This plate lines the two origins
+    up side by side, topic by topic, and shows where the handshake fails in the standard paradigm — and where
+    T·U·A (The Unified Atom) is offered as the theory that actually closes it, with TAU — the more recent
+    runtime built to execute TUA — standing as the claim that the closure is operational, not just narrative.
+  </p>
+
+  <div class="diff-grid">
+    <div class="diff-row">
+      <div class="topic">Origin event</div>
+      <div class="p1"><span class="k">Plate 1 — Standard</span>A singularity; the Big Bang. Cause of the singularity itself is outside the theory.</div>
+      <div class="p2"><span class="k">Plate 2 — Infinity file</span>A failed star too massive to ignite, or Polaris' shell from an unstopped supernova — the universe as stellar residue, not a point singularity.</div>
+    </div>
+    <div class="diff-row">
+      <div class="topic">Missing 95%</div>
+      <div class="p1"><span class="k">Plate 1 — Standard</span>Named as dark matter (~27%) and dark energy (~68%) — placeholders for a mismatch, not derived from the same math as ordinary matter.</div>
+      <div class="p2"><span class="k">Plate 2 / Dragon Engine</span>Dark sector is split residue of the N=3 knot itself — Tube 2 (dark matter) + Tube 3 (dark energy) = 100% by construction (Canon 8·12), not bolted on after the fact.</div>
+    </div>
+    <div class="diff-row">
+      <div class="topic">Force unification</div>
+      <div class="p1"><span class="k">Plate 1 — Standard</span>Four forces, never fully reconciled. Einstein's two-force geometry became obsolete once the strong and weak forces were found.</div>
+      <div class="p2"><span class="k">Plate 2 / Dragon Engine</span>A single topological origin: Strong = Borromean confinement, Electroweak = winding number, Gravity = curvature — one N=3 knot, three tubes, one G0 (Canons 7–8).</div>
+    </div>
+    <div class="diff-row">
+      <div class="topic">Black holes</div>
+      <div class="p1"><span class="k">Plate 1 — Standard</span>A genuine point of total collapse — an event horizon beyond which physics as described breaks down.</div>
+      <div class="p2"><span class="k">Plate 2 / TUA</span>"Sorry, no black holes." Plate 2's Infinity file: the AGN is stripped of neutrons and becomes unstable, not a singularity. TUA sharpens this into the Quantum Mother Hole — not collapsing but apexed, full, persisting; Hawking radiation does not apply. The Dragon Codex keeps the older name (Black Hole Birthmark / Sister) as a neutron-loss scar — same terminal state, not yet reconciled with TUA's framing.</div>
+    </div>
+    <div class="diff-row">
+      <div class="topic">Is the gap actually closed?</div>
+      <div class="p1"><span class="k">Plate 1 — Standard</span>No. Four forces described, not unified; dark matter and dark energy are named, not derived.</div>
+      <div class="p2"><span class="k">TUA / TAU</span>TUA claims closure directly: the Madelung transformation shows QM = fluid mechanics + one term (MHD‑9, the Bohm potential); setting ℏ→0 recovers classical Euler exactly. That's a stated mathematical bridge from quantum to classical, not a topology offered as an analogy. TAU, built after TUA was sealed, is the runtime that executes the seven-stage ladder — offered as evidence the framework runs, not just parses.</div>
+    </div>
+    <div class="diff-row">
+      <div class="topic">What we're made of</div>
+      <div class="p1"><span class="k">Plate 1 — Standard</span>Stardust — the products of stellar nucleosynthesis dispersed by supernovae (Sagan's formulation).</div>
+      <div class="p2"><span class="k">Plate 2 — Infinity file</span>Star concentrate — not just dust but the forged, self-replicating (hydrogenesis) core material itself, carried out by the star's own "exodus."</div>
+    </div>
+    <div class="diff-row">
+      <div class="topic">Scale-invariance</div>
+      <div class="p1"><span class="k">Plate 1 — Standard</span>Different laws effectively govern different scales (particle physics vs. cosmology) — no single equation runs from Planck length to the observable universe.</div>
+      <div class="p2"><span class="k">Plate 2 / Dragon Engine</span>One radius, run through sixteen laws across 71 degrees of magnitude, Planck seed to vessel wall and back — deg 0 = deg 71, the same math at every scale (Canon 9·16).</div>
+    </div>
+  </div>
+
+  <div class="handshake-verdict">
+    <div class="lbl">The verdict this plate is built to show</div>
+    <p>Plate 1 is not wrong about what it measures — it's a paradigm that ran out of topology at the exact
+    point Einstein needed one. Plate 2 supplied the intuition (a stellar origin, no singularity) but arrived
+    through myth and narrative rather than derivation. T·U·A is the sealed theory built on that intuition:
+    seven stages, nine equations, three sigils, and — critically — a stated mathematical closure between
+    quantum and classical mechanics (MHD‑9, the Bohm term) that Einstein's geometry never had. The Dragon
+    Engine and Sigil Atlas measure and name that theory across a 71-degree scale; TAU, built more recently,
+    is the runtime that executes it. Whether the handshake is genuinely closed rests on TUA's equations
+    holding up under scrutiny — that's a claim this plate states, not one it has independently verified.</p>
+  </div>
+</section>
+
+<footer>
+  HA_8.1 · James Paul Stanley Jr · ATUM_ATOM / A_TUA_M · Origin Plates — Plate 1 grounded in documented history; Plate 2 drawn from source material verbatim; Plate 3 is comparative framing, not an empirical claim
+</footer>
+
+<script>
+  const buttons = document.querySelectorAll('.plate-nav button');
+  const plates = document.querySelectorAll('section.plate');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      plates.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.plate).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
